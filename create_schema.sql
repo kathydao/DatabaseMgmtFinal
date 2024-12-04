@@ -1,6 +1,3 @@
-CREATE DATABASE ClothingStore;
-USE ClothingStore;
-
 CREATE TABLE Store (
     ClothingID INT PRIMARY KEY,
     Price INT NOT NULL
@@ -51,4 +48,3 @@ CREATE VIEW GoldCustomers AS
 SELECT CustomerID, State, Age
 FROM Customer
 WHERE GoldCustomer = TRUE;
-
