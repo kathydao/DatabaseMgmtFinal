@@ -1,31 +1,24 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 import mysql.connector
+from db_operations import db_operations
 from datetime import datetime
 
 # Flask app initialization
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 
-# Database connection details
-db_config = {
-    'user': 'root',
-    'password': 'password',
-    'host': 'localhost',
-    'database': 'ClothingStore'
-}
+# global variable for MySQL password
+db_ops = None
 
-def db_connect():
-    return mysql.connector.connect(**db_config)
+def db_initialize(password):
+    db_ops = db_operations('localhost', 'root', password)  # Use the provided password
+    db_ops.create_database()
+    db_ops.create_tables()
 
 # --- Route to Display Records ---
 @app.route('/')
 def index():
-    conn = db_connect()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM Store;")
-    store_items = cursor.fetchall()
-    cursor.close()
-    conn.close()
+    store_items  = db_ops.get_store_items()
     return render_template('index.html', store_items=store_items)
 
 # --- Route to Add New Clothing Item ---
@@ -33,54 +26,49 @@ def index():
 def add_item():
     clothing_id = request.form['clothing_id']
     price = request.form['price']
-    conn = db_connect()
-    cursor = conn.cursor()
     try:
-        cursor.execute("INSERT INTO Store (ClothingID, Price) VALUES (%s, %s)", (clothing_id, price))
-        conn.commit()
-        flash('Item added successfully!')
+        message = db_ops.add_store_item(clothing_id, price)
+        flash(message)
     except Exception as e:
-        conn.rollback()
-        flash(f'Error: {str(e)}')
-    finally:
-        cursor.close()
-        conn.close()
+        flash(f"Unexpected error: {str(e)}")
     return redirect(url_for('index'))
+
 
 # --- Route to Delete Clothing Item (Soft Delete) ---
 @app.route('/delete/<int:clothing_id>', methods=['POST'])
 def delete_item(clothing_id):
-    conn = db_connect()
-    cursor = conn.cursor()
     try:
-        cursor.execute("DELETE FROM Store WHERE ClothingID = %s", (clothing_id,))
-        conn.commit()
-        flash('Item deleted successfully!')
+        message = db_ops.delete_store_item(clothing_id)
+        flash(message)
     except Exception as e:
-        conn.rollback()
-        flash(f'Error: {str(e)}')
-    finally:
-        cursor.close()
-        conn.close()
+        flash(f"Unexpected error: {str(e)}")
     return redirect(url_for('index'))
 
 # --- Route to Update Gold Customer Status ---
 @app.route('/update_gold/<int:customer_id>', methods=['POST'])
 def update_gold_customer(customer_id):
-    conn = db_connect()
-    cursor = conn.cursor()
     try:
-        cursor.execute("UPDATE Customer SET GoldCustomer = TRUE WHERE CustomerID = %s AND (SELECT COUNT(*) FROM CustomerTransactions WHERE CustomerID = %s) > 5", (customer_id, customer_id))
-        conn.commit()
-        flash('Customer updated to Gold Customer status!')
+        message = db_ops.update_gold_customer_status(customer_id)
+        flash(message)
     except Exception as e:
-        conn.rollback()
-        flash(f'Error: {str(e)}')
-    finally:
-        cursor.close()
-        conn.close()
+        flash(f"Unexpected error: {str(e)}")
     return redirect(url_for('index'))
+
+
+def main():
+    global db_ops
+    password = input("Please enter your MySQL password: ")
+    try:
+        db_ops = db_operations('localhost', 'root', password)
+        db_ops.create_database()
+        db_ops.create_tables()
+        db_ops.insert_data()
+        print("Starting the Flask app...")
+        app.run(debug=True)
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
 
 # --- Main function to run the application ---
 if __name__ == '__main__':
-    app.run(debug=True)
+    main()
