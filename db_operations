@@ -1,0 +1,72 @@
+import sqlite3
+
+class db_operations:
+
+    def __init__(self, db_name):
+        self.connection = sqlite3.connect(db_name)
+        self.cursor = self.connection.cursor()
+        print("Connection established with the database.")
+
+    def show_clothing_items(self):
+        query = "SELECT * FROM Store;"
+        self.cursor.execute(query)
+        results = self.cursor.fetchall()
+        for row in results:
+            print(row)
+
+    def add_clothing_item(self, clothing_id, price):
+        query = "INSERT INTO Store (ClothingID, Price) VALUES (?, ?);"
+        try:
+            self.cursor.execute(query, (clothing_id, price))
+            self.connection.commit()
+            print("Clothing item added successfully.")
+        except Exception as e:
+            self.connection.rollback()
+            print(f"Error adding clothing item: {e}")
+
+    def delete_clothing_item(self, clothing_id):
+        query = "DELETE FROM Store WHERE ClothingID = ?;"
+        try:
+            self.cursor.execute(query, (clothing_id,))
+            self.connection.commit()
+            print("Clothing item deleted successfully.")
+        except Exception as e:
+            self.connection.rollback()
+            print(f"Error deleting clothing item: {e}")
+
+    def update_clothing_item(self, clothing_id, new_price):
+        query = "UPDATE Store SET Price = ? WHERE ClothingID = ?;"
+        try:
+            self.cursor.execute(query, (new_price, clothing_id))
+            self.connection.commit()
+            print("Clothing item updated successfully.")
+        except Exception as e:
+            self.connection.rollback()
+            print(f"Error updating clothing item: {e}")
+
+    def find_customers_by_state(self, state):
+        query = "SELECT * FROM Customer WHERE State = ?;"
+        self.cursor.execute(query, (state,))
+        results = self.cursor.fetchall()
+        if results:
+            for row in results:
+                print(row)
+        else:
+            print(f"No customers found in state: {state}")
+
+    def mark_gold_customer(self, customer_id):
+        query = "UPDATE Customer SET GoldCustomer = TRUE WHERE CustomerID = ?;"
+        try:
+            self.cursor.execute(query, (customer_id,))
+            self.connection.commit()
+            print("Customer marked as Gold Customer successfully.")
+        except Exception as e:
+            self.connection.rollback()
+            print(f"Error updating customer status: {e}")
+
+    def show_gold_customers(self):
+        query = "SELECT * FROM GoldCustomers;"
+        self.cursor.execute(query)
+        results = self.cursor.fetchall()
+        for row in results:
+            print(row)
