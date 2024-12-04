@@ -1,74 +1,62 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
-import mysql.connector
 from db_operations import db_operations
-from datetime import datetime
 
-# Flask app initialization
-app = Flask(__name__)
-app.secret_key = 'supersecretkey'
+# Global variable for database operations
+# Assuming the database file is called 'clothing_store.db'
+db_ops = db_operations('clothing_store.db')
 
-# global variable for MySQL password
-db_ops = None
+def start_app():
+    print("Welcome to the Clothing Store Management System!")
+    main_menu()
 
-def db_initialize(password):
-    db_ops = db_operations('localhost', 'root', password)  # Use the provided password
-    db_ops.create_database()
-    db_ops.create_tables()
+def main_menu():
+    while True:
+        user_choice = input('''
+        SELECT FROM THE FOLLOWING MENU:
+        1. Show all clothing items
+        2. Add a new clothing item
+        3. Delete a clothing item
+        4. Update clothing item details
+        5. Find customers by state
+        6. Mark customer as Gold Customer
+        7. Show all Gold Customers
+        8. Exit
+        Choice: ''')
 
-# --- Route to Display Records ---
-@app.route('/')
-def index():
-    store_items  = db_ops.get_store_items()
-    return render_template('index.html', store_items=store_items)
+        if user_choice == '1':
+            db_ops.show_clothing_items()
+        elif user_choice == '2':
+            add_clothing_item()
+        elif user_choice == '3':
+            delete_clothing_item()
+        elif user_choice == '4':
+            update_clothing_item()
+        elif user_choice == '5':
+            state = input("Enter the state to search customers: ")
+            db_ops.find_customers_by_state(state)
+        elif user_choice == '6':
+            customer_id = input("Enter customer ID to mark as Gold Customer: ")
+            db_ops.mark_gold_customer(customer_id)
+        elif user_choice == '7':
+            db_ops.show_gold_customers()
+        elif user_choice == '8':
+            print("Exiting the application.")
+            break
+        else:
+            print("Invalid option. Please choose again.")
 
-# --- Route to Add New Clothing Item ---
-@app.route('/add', methods=['POST'])
-def add_item():
-    clothing_id = request.form['clothing_id']
-    price = request.form['price']
-    try:
-        message = db_ops.add_store_item(clothing_id, price)
-        flash(message)
-    except Exception as e:
-        flash(f"Unexpected error: {str(e)}")
-    return redirect(url_for('index'))
+def add_clothing_item():
+    clothing_id = input("Enter Clothing ID: ")
+    price = input("Enter Price: ")
+    db_ops.add_clothing_item(clothing_id, price)
 
+def delete_clothing_item():
+    clothing_id = input("Enter Clothing ID to delete: ")
+    db_ops.delete_clothing_item(clothing_id)
 
-# --- Route to Delete Clothing Item (Soft Delete) ---
-@app.route('/delete/<int:clothing_id>', methods=['POST'])
-def delete_item(clothing_id):
-    try:
-        message = db_ops.delete_store_item(clothing_id)
-        flash(message)
-    except Exception as e:
-        flash(f"Unexpected error: {str(e)}")
-    return redirect(url_for('index'))
+def update_clothing_item():
+    clothing_id = input("Enter Clothing ID to update: ")
+    new_price = input("Enter new Price: ")
+    db_ops.update_clothing_item(clothing_id, new_price)
 
-# --- Route to Update Gold Customer Status ---
-@app.route('/update_gold/<int:customer_id>', methods=['POST'])
-def update_gold_customer(customer_id):
-    try:
-        message = db_ops.update_gold_customer_status(customer_id)
-        flash(message)
-    except Exception as e:
-        flash(f"Unexpected error: {str(e)}")
-    return redirect(url_for('index'))
-
-
-def main():
-    global db_ops
-    password = input("Please enter your MySQL password: ")
-    try:
-        db_ops = db_operations('localhost', 'root', password)
-        db_ops.create_database()
-        db_ops.create_tables()
-        db_ops.insert_data()
-        print("Starting the Flask app...")
-        app.run(debug=True)
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-
-
-# --- Main function to run the application ---
 if __name__ == '__main__':
-    main()
+    start_app()
