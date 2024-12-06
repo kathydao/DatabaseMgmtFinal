@@ -8,14 +8,14 @@ class db_operations:
         print("Connection established with the database.")
 
     def show_clothing_items(self):
-        query = "SELECT * FROM Store;"
+        query = "SELECT * FROM store;"
         self.cursor.execute(query)
         results = self.cursor.fetchall()
         for row in results:
             print(row)
 
     def add_clothing_item(self, clothing_id, price):
-        query = "INSERT INTO Store (ClothingID, Price) VALUES (?, ?);"
+        query = "INSERT INTO store (ClothingID, Price) VALUES (?, ?);"
         try:
             self.cursor.execute(query, (clothing_id, price))
             self.connection.commit()
@@ -25,7 +25,7 @@ class db_operations:
             print(f"Error adding clothing item: {e}")
 
     def delete_clothing_item(self, clothing_id):
-        query = "DELETE FROM Store WHERE ClothingID = ?;"
+        query = "DELETE FROM store WHERE ClothingID = ?;"
         try:
             self.cursor.execute(query, (clothing_id,))
             self.connection.commit()
@@ -35,7 +35,7 @@ class db_operations:
             print(f"Error deleting clothing item: {e}")
 
     def update_clothing_item(self, clothing_id, new_price):
-        query = "UPDATE Store SET Price = ? WHERE ClothingID = ?;"
+        query = "UPDATE store SET Price = ? WHERE ClothingID = ?;"
         try:
             self.cursor.execute(query, (new_price, clothing_id))
             self.connection.commit()
